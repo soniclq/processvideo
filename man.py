@@ -7,6 +7,8 @@ import platform
 import glob
 # import ffprobe3
 # from ffprobe import FFProbe
+from datetime import datetime
+
 from ffprobe3 import FFProbe
 
 ### 获得视频文件列表
@@ -19,15 +21,17 @@ audioFileRoot = "/home/sonic/musicProject/"
 def merge_audiolist(audioList):
 
     merge_file_text = audioFileRoot+"/audio.txt"
-    merge_file_output = audioFileRoot+"/out.mp3"
+    merge_file_output = audioFileRoot+getTimeStr()+".mp3"
     # try:      with
     try:
         with open(merge_file_text, 'w') as f2:
-            for file_name in audiofile:
+            for file_name in audioList:
                 f2.write("file  " + file_name + "\n")
     except Exception as e:
         raise Exception()
     cmd = "ffmpeg -f concat -loglevel error -safe 0 -i " + merge_file_text + " -c copy " + merge_file_output
+    ffmpeg_run(cmd)
+    return merge_file_output
 
 
 
@@ -64,12 +68,13 @@ def merge_file( file_directory):
     first_file_name = file_name_list[0]
     temp_file_path = first_file_name[0:first_file_name.rfind("_")] + ".txt"
     # merge_file_path = first_file_name[0:first_file_name.rfind("/")] + "out.mp4";
-    merge_file_path = videoOutpath+"/out.mp4"
+    merge_file_path = videoOutpath+"/vout"+getTimeStr()+".mp4"
 
 
     try:
         with open(temp_file_path, 'w') as f2:
             for file_name in file_name_list:
+                f2.write("file  " + file_name + "\n")
                 f2.write("file  " + file_name + "\n")
     except Exception as e:
         raise Exception()
@@ -136,33 +141,9 @@ def getAudioDuration(path):
     return adur
             # print(stream.duration_seconds())
 
-
-# def
-def main():
-    vdur = 0
-    videolist = getVideoFileList()
-
-    ### ffmpeg 合并文件
-    print ("hello world!!")
-    # concatVideoFiles()
-    # outfile = merge_file(videoPath)
-
-    # getVideoDuration(videoPath+"/v1.mp4")
-    vdur = getVideoDuration(mergeVideo1)
-    print(vdur)
-    adur = getAudioDuration(audiofile)
-    print(adur)
-    aoutpath = "/home/sonic/musicProject/aout.mp3"
-    count = (vdur / adur) + 1
-    audioList = []
-    cmd = ""
-    if ( vdur < adur):
-        cmd  = "ffmpeg -i %s -ss 0 -t %f -acodec copy %s" % (audiofile, vdur ,aoutpath)
-    else:
-       for i in count:
-           audioList.append(audiofile)
-       merge_audiolist(audioList)
-
+def getTimeStr():
+    return datetime.now().strftime("%m%d%H%M%S")
+def ffmpeg_run(cmd):
     try:
         proc = subprocess.Popen(cmd, shell=True,
                                 stdout=subprocess.PIPE,
@@ -177,10 +158,40 @@ def main():
     finally:
         pass
 
+# def
+def main():
+    vdur = 0
+    videolist = getVideoFileList()
 
-    finaloutfile = "/home/sonic/musicProject/final/out.mp4"
+    ### ffmpeg 合并文件
+    print ("hello world!!")
+    # concatVideoFiles()
+    outfile = merge_file(videoPath)
+
+    # getVideoDuration(videoPath+"/v1.mp4")
+    vdur = getVideoDuration(outfile)
+    print(vdur)
+    adur = getAudioDuration(audiofile)
+    print(adur)
+    aoutpath = "/home/sonic/musicProject/aout" + getTimeStr()+".mp3"
+    count = (int)(vdur / adur) + 1
+    audioList = []
+    cmd = ""
+    if ( vdur < adur):
+        cmd  = "ffmpeg -i %s -ss 0 -t %f -acodec copy %s" % (audiofile, vdur ,aoutpath)
+    else:
+       for i in range(0, count):
+           audioList.append(audiofile)
+       temp_audio = merge_audiolist(audioList)
+
+       cmd = "ffmpeg -i %s -ss 0 -t %f -acodec copy %s" % (temp_audio, vdur ,aoutpath)
+
+    ffmpeg_run(cmd)
+
+
+    finaloutfile = "/home/sonic/musicProject/final/" + getTimeStr() + ".mp4"
     ### final merge audio and video
-    cmd = 'ffmpeg -i %s -i %s -c copy %s' % (mergeVideo1, aoutpath, finaloutfile)
+    cmd = 'ffmpeg -i %s -i %s -c copy %s' % (outfile, aoutpath, finaloutfile)
     try:
         proc = subprocess.Popen(cmd, shell=True,
                                 stdout=subprocess.PIPE,
