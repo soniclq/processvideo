@@ -1,6 +1,4 @@
-
-
-
+import json
 import os
 import subprocess
 import platform
@@ -12,12 +10,14 @@ from datetime import datetime
 from ffprobe3 import FFProbe
 
 ### 获得视频文件列表
-videoPath = "/home/sonic/musicProject"
+from probe import ffprobe
+
+videomiddlePath = "/home/sonic/musicProject/middlevideo"
 videoOutpath = "/home/sonic/workplace/youtubeProject/out"
 mergeVideo1 = "/home/sonic/workplace/youtubeProject/out/out.mp4"
 audiofile = "/home/sonic/musicProject/Dream.mp3"
 audioFileRoot = "/home/sonic/musicProject/"
-
+prepareVideoPath = "/home/sonic/musicProject/originvideo"
 def merge_audiolist(audioList):
 
     merge_file_text = audioFileRoot+"/audio.txt"
@@ -48,8 +48,21 @@ def merge_file( file_directory):
 
     # 遍历文件名列表
     for file_name in file_name_list:
+        ffprobe_result = ffprobe(file_name)
         # 取目录或者文件名
         base_name = os.path.basename(file_name)
+        if (ffprobe_result.return_code == 0):
+            d = json.loads(ffprobe_result.json)
+            streams = d.get("streams", [])
+            for stream in streams:
+                if stream.get("codec_type") == "video":
+                    # print(int(eval(stream.get("r_frame_rate")))) =
+                    frame_rate = int(eval(stream.get('r_frame_rate')))
+                    print (frame_rate)
+                    if frame_rate != 29:
+                        file_name_list.remove(file_name)
+
+                # print (stream.get("codec_type"))
         # file_name  是文件的场合
         if (os.path.isfile(file_name)):
             # pass
@@ -70,12 +83,15 @@ def merge_file( file_directory):
     # merge_file_path = first_file_name[0:first_file_name.rfind("/")] + "out.mp4";
     merge_file_path = videoOutpath+"/vout"+getTimeStr()+".mp4"
 
-
+    count = 0
     try:
         with open(temp_file_path, 'w') as f2:
-            for file_name in file_name_list:
-                f2.write("file  " + file_name + "\n")
-                f2.write("file  " + file_name + "\n")
+            for count in range(0, 2):
+                for file_name in file_name_list:
+                    f2.write("file  " + file_name + "\n")
+                    # count = count +1
+                count = count + 1
+                # f2.write("file  " + file_name + "\n")
     except Exception as e:
         raise Exception()
 
@@ -157,21 +173,40 @@ def ffmpeg_run(cmd):
         raise Exception()
     finally:
         pass
+def prepare(file_directory):
+    mp4_file_dir = os.path.join(file_directory, "*.mp4")
 
+    # 对路径下的mp4文件名进行排序
+    file_name_list = sorted(glob.glob(mp4_file_dir))
+
+    # out =
+    if (len(file_name_list) == 0):
+        # self.logger.error(u"[文件目录] {0}".format(file_direcotry))
+        raise Exception(u"目录中文件不存在")
+    num = 0
+    for file in file_name_list:
+        cmd = "ffmpeg -i %s -map 0:0 -vcodec copy %s/%s-%d.mp4" % (file, videomiddlePath, getTimeStr(), num)
+        num = num + 1
+        ffmpeg_run(cmd)
 # def
 def main():
+    prepare(prepareVideoPath)
     vdur = 0
     videolist = getVideoFileList()
 
     ### ffmpeg 合并文件
     print ("hello world!!")
     # concatVideoFiles()
-    outfile = merge_file(videoPath)
+    outfile = merge_file(videomiddlePath)
+
+    # ffprobe_result = ffprobe(file_path=videoPath))
+
 
     # getVideoDuration(videoPath+"/v1.mp4")
     vdur = getVideoDuration(outfile)
     print(vdur)
     adur = getAudioDuration(audiofile)
+
     print(adur)
     aoutpath = "/home/sonic/musicProject/aout" + getTimeStr()+".mp3"
     count = (int)(vdur / adur) + 1
