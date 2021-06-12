@@ -1,10 +1,12 @@
 import json
 import os
+import random
 import subprocess
 import platform
 import glob
 # import ffprobe3
 # from ffprobe import FFProbe
+import time
 from datetime import datetime
 
 from ffprobe3 import FFProbe
@@ -12,12 +14,17 @@ from ffprobe3 import FFProbe
 ### 获得视频文件列表
 from probe import ffprobe
 
+
 videomiddlePath = "/home/sonic/musicProject/middlevideo"
 videoOutpath = "/home/sonic/workplace/youtubeProject/out"
 mergeVideo1 = "/home/sonic/workplace/youtubeProject/out/out.mp4"
-audiofile = "/home/sonic/musicProject/Dream.mp3"
+audiofile = "/home/sonic/musicProject/originaudio/Dream2.mp3"
 audioFileRoot = "/home/sonic/musicProject/"
 prepareVideoPath = "/home/sonic/musicProject/originvideo"
+transcodepath = "/home/sonic/musicProject/transcodevideo"
+
+
+# headvideoList = [transcodepath+"/0416003741.mp4", transcodepath+"/"
 def merge_audiolist(audioList):
 
     merge_file_text = audioFileRoot+"/audio.txt"
@@ -41,6 +48,7 @@ def merge_file( file_directory):
 
     # 对路径下的mp4文件名进行排序
     file_name_list = sorted(glob.glob(mp4_file_dir))
+    random.shuffle(file_name_list)
 
     if (len(file_name_list) == 0):
         # self.logger.error(u"[文件目录] {0}".format(file_direcotry))
@@ -59,8 +67,8 @@ def merge_file( file_directory):
                     # print(int(eval(stream.get("r_frame_rate")))) =
                     frame_rate = int(eval(stream.get('r_frame_rate')))
                     print (frame_rate)
-                    if frame_rate != 29:
-                        file_name_list.remove(file_name)
+                    # if frame_rate != 29:
+                    #     file_name_list.remove(file_name)
 
                 # print (stream.get("codec_type"))
         # file_name  是文件的场合
@@ -82,11 +90,11 @@ def merge_file( file_directory):
     temp_file_path = first_file_name[0:first_file_name.rfind("_")] + ".txt"
     # merge_file_path = first_file_name[0:first_file_name.rfind("/")] + "out.mp4";
     merge_file_path = videoOutpath+"/vout"+getTimeStr()+".mp4"
-
+    print("total %d file" % (len(file_name_list)))
     count = 0
     try:
         with open(temp_file_path, 'w') as f2:
-            for count in range(0, 2):
+            for count in range(0, 1):
                 for file_name in file_name_list:
                     f2.write("file  " + file_name + "\n")
                     # count = count +1
@@ -96,6 +104,7 @@ def merge_file( file_directory):
         raise Exception()
 
     # mp4 文件合并
+
     cmd = "ffmpeg -f concat -loglevel error -safe 0 -i " + temp_file_path + " -c copy " + merge_file_path
 
     try:
@@ -188,23 +197,41 @@ def prepare(file_directory):
         cmd = "ffmpeg -i %s -map 0:0 -vcodec copy %s/%s-%d.mp4" % (file, videomiddlePath, getTimeStr(), num)
         num = num + 1
         ffmpeg_run(cmd)
-# def
+def encodeVideos(vpath):
+    mp4_file_dir = os.path.join(vpath, "*.mp4")
+
+    # 对路径下的mp4文件名进行排序
+    file_name_list = sorted(glob.glob(mp4_file_dir))
+    for file in file_name_list:
+        cmd = "ffmpeg -i %s -c:v libx264 -preset slow -crf 23 -r 25  %s/%s.mp4" % (file, transcodepath, getTimeStr())
+        print (cmd)
+        ffmpeg_run(cmd)
+        time.sleep(10)
+
+
 def main():
-    prepare(prepareVideoPath)
+    ##emove audio channel and put in middle path
+    print("prepare video path is "+prepareVideoPath+"......")
+    # prepare(prepareVideoPath)
+    print("prepare done")
+
+    ## encode video
+    # encodeVideos(videomiddlePath)
+
     vdur = 0
     videolist = getVideoFileList()
 
     ### ffmpeg 合并文件
     print ("hello world!!")
     # concatVideoFiles()
-    outfile = merge_file(videomiddlePath)
-
+    outfile = merge_file(transcodepath)
+    print ("merge_file done")
     # ffprobe_result = ffprobe(file_path=videoPath))
 
 
     # getVideoDuration(videoPath+"/v1.mp4")
     vdur = getVideoDuration(outfile)
-    print(vdur)
+    print("video duration %d" % (vdur))
     adur = getAudioDuration(audiofile)
 
     print(adur)
@@ -222,8 +249,8 @@ def main():
        cmd = "ffmpeg -i %s -ss 0 -t %f -acodec copy %s" % (temp_audio, vdur ,aoutpath)
 
     ffmpeg_run(cmd)
-
-
+    print("audio prepare done")
+    print("start final video .....")
     finaloutfile = "/home/sonic/musicProject/final/" + getTimeStr() + ".mp4"
     ### final merge audio and video
     cmd = 'ffmpeg -i %s -i %s -c copy %s' % (outfile, aoutpath, finaloutfile)
@@ -240,5 +267,6 @@ def main():
         raise Exception()
     finally:
         pass
+    print("end final video...")
 
 main()
