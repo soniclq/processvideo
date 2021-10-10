@@ -17,8 +17,8 @@ from probe import ffprobe
 
 
 # videomiddlePath = "/home/sonic/musicProject/middlevideo"
-# videoOutpath = "/home/sonic/workplace/youtubeProject/out"
-# mergeVideo1 = "/home/sonic/workplace/youtubeProject/out/out.mp4"
+# videoOutpath = "/home/sonic/workplace/bbeProject/out"
+# mergeVideo1 = "/home/sonic/workplace/youtubeProject/out/out."
 # audiofile = "/home/sonic/musicProject/originaudio/deepsleephealing.mp3"
 # audioFileRoot = "/home/sonic/musicProject/"
 # prepareVideoPath = "/home/sonic/musicProject/originvideo"
@@ -183,7 +183,7 @@ def ffmpeg_run(cmd):
         raise Exception()
     finally:
         pass
-def prepare(file_directory):
+def prepare(file_directory, outpath):
     mp4_file_dir = os.path.join(file_directory, "*.mp4")
 
     # 对路径下的mp4文件名进行排序
@@ -194,23 +194,35 @@ def prepare(file_directory):
         # self.logger.error(u"[文件目录] {0}".format(file_direcotry))
         raise Exception(u"目录中文件不存在")
     num = 0
+    folder = os.path.exists(outpath)
+    if not folder:
+        os.mkdir(outpath)
+    else:
+        pass
     for file in file_name_list:
-        cmd = "ffmpeg -i %s -map 0:0 -vcodec copy %s/%s-%d.mp4" % (file, videomiddlePath, getTimeStr(), num)
+        cmd = "ffmpeg -i %s -map 0:0 -vcodec copy %s/%s-%d.mp4" % (file, outpath, getTimeStr(), num)
         num = num + 1
+        print("prepareVideo ffcmd "+cmd)
         ffmpeg_run(cmd)
-def encodeVideos(vpath):
-    mp4_file_dir = os.path.join(vpath, "*.mp4")
 
+
+def encodeVideos(vpath, outpath):
+    mp4_file_dir = os.path.join(vpath, "*.mp4")
+    folder = os.path.exists(outpath)
+    if not folder:
+        os.mkdir(outpath)
+    else:
+        pass
     # 对路径下的mp4文件名进行排序
     file_name_list = sorted(glob.glob(mp4_file_dir))
     for file in file_name_list:
-        cmd = "ffmpeg -i %s -c:v libx264 -preset slow -crf 23 -r 25  %s/%s.mp4" % (file, transcodepath, getTimeStr())
+        cmd = "ffmpeg -i %s -c:v libx264 -preset slow -crf 23 -r 25  %s/%s.mp4" % (file, outpath, getTimeStr())
         print (cmd)
         ffmpeg_run(cmd)
         time.sleep(10)
 
 
-def main():
+def create_finalvideo():
     ##emove audio channel and put in middle path
     print("prepare video path is "+Constans.PREPAREVIDEOPATH+"......")
     # prepare(prepareVideoPath)
@@ -223,7 +235,6 @@ def main():
     videolist = getVideoFileList()
 
     ### ffmpeg 合并文件
-    print ("hello world!!")
     # concatVideoFiles()
     outfile = merge_file(Constans.TRANSCODEVIDEOPATH)
     print ("merge_file done")
@@ -269,6 +280,24 @@ def main():
         raise Exception()
     finally:
         pass
+
+    if os.path.exists(outfile):
+        os.remove(outfile)
     print("end final video...")
 
-main()
+
+def reencodeFile():
+    prepare(Constans.ENCODEPATH, Constans.ENCODEPATHOUT)
+    encodeVideos(Constans.ENCODEPATHOUT, Constans.ENCODEOUTPATH)
+
+# reencodeFile()
+
+i = 2
+for a in range(0, i):
+    create_finalvideo()
+
+
+
+
+# encodeVideos()
+
