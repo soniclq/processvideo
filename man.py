@@ -167,6 +167,10 @@ def getAudioDuration(path):
     return adur
             # print(stream.duration_seconds())
 
+def getAudioTitle(path):
+    filename = os.path.basename(path)
+    ## split expand text
+    basename = os.path.splitext(filename)[0]
 def getTimeStr():
     return datetime.now().strftime("%m%d%H%M%S")
 def ffmpeg_run(cmd):
@@ -236,7 +240,7 @@ def main():
     adur = getAudioDuration(Constans.AUDIOFILE)
 
     print("audio duration %d" % (adur))
-    aoutpath = "/home/sonic/musicProject/aout" + getTimeStr()+".mp3"
+    aoutpath = Constans.AUDIO_PREPARE_FILE + getTimeStr()+".mp3"
     count = (int)(vdur / adur) + 1
     audioList = []
     cmd = ""
@@ -271,4 +275,6 @@ def main():
         pass
     print("end final video...")
 
-main()
+
+if __name__ == '__main__':
+    main()
