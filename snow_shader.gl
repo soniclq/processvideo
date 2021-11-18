@@ -1,0 +1,27 @@
+
+uniform sampler2D texture;
+varying vec2 TextureCoordsVarying;
+uniform float playTime;
+
+#define _SnowflakeAmount 5 
+#define _BlizardFactor 0.1
+
+float rnd(float x) {
+    return fract(sin(dot(vec2(x+47.49,38.2467/(x+2.3)), vec2(12.9898, 78.233)))* (43758.5453));
+}
+
+float drawCircle(vec2 uv, vec2 center, float radius) {
+    return 1.0 - smoothstep(0.0, radius, length(uv - center));
+}
+
+void main() {
+    gl_FragColor = texture2D(texture, TextureCoordsVarying);
+
+    float j;
+    for(int i=0; i<_SnowflakeAmount; i++) {
+      j = float(i);
+      float speed = 0.3+rnd(cos(j))*(0.7+0.5*cos(j/(float(_SnowflakeAmount)*0.25)));
+      vec2 center = vec2((0.25-TextureCoordsVarying.y)*_BlizardFactor+rnd(j)+0.1*cos(playTime+sin(j)), 1.0-mod(sin(j)-speed*(playTime*1.5*(0.1+_BlizardFactor)), 1.0));
+      gl_FragColor += vec4(0.9*drawCircle(TextureCoordsVarying, center, 0.001+speed*0.012));
+    }
+}
