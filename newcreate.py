@@ -7,11 +7,12 @@ from ffprobe3 import FFProbe
 
 import Constans
 
-file_list = "/Volumes/SSD/download/music/picture"
-ffmpegPath = "/Volumes/SSD/workplace/ffmpeg-opengl/ffmpeg-4.3.1/ffmpeg"
+file_list = "./pict-1129"
+ffmpegPath = "/home/sonic/Downloads/ffmpeg/ffmpeg"
 
 def ffmpeg_run(cmd):
     try:
+        print(cmd)
         proc = subprocess.Popen(cmd, shell=True,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.STDOUT)
@@ -84,7 +85,7 @@ def main():
     for pic in file_name_list:
         finaloutfile = os.getcwd()+"/" + getTimeStr() + ".mp4"
         cmd = '''%s  -loop 1 -i %s -pix_fmt yuv420p -vcodec libx264 -b:v 600k -r:v 25 -preset medium -crf 29 -vframes 360  -r 18 -t\
-         30 -filter_complex "plusglshader=sdsource=snow_shader.gl:vxsource=snow_vertex.gl"  -an -f mp4 -y %s'''  % (ffmpegPath, pic, finaloutfile)
+         20 -filter_complex "plusglshader=sdsource=snow_shader.gl:vxsource=snow_vertex.gl"  -an -f mp4 -y %s'''  % (ffmpegPath, pic, finaloutfile)
         ffmpeg_run(cmd)
         vdur = getVideoDuration(finaloutfile)
 

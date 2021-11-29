@@ -3,7 +3,7 @@ uniform sampler2D texture;
 varying vec2 TextureCoordsVarying;
 uniform float playTime;
 
-#define _SnowflakeAmount 5 
+#define _SnowflakeAmount 10
 #define _BlizardFactor 0.1
 
 float rnd(float x) {
